@@ -1,6 +1,8 @@
-# Notion to Supabase Sync
+# Notion to Supabase Sync (Node.js)
 
 A production-ready Node.js script that syncs data from Notion databases to Supabase with **automatic column creation**, incremental sync support, comprehensive error handling, and robust logging.
+
+> **Note**: This is the **Node.js version** with full features including automatic column creation. For the lightweight Edge Function version, see `../notion-supabase-edge-function/`.
 
 ## Features
 

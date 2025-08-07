@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: notion-supabase-sync
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NOTION_TOKEN
+        sync: false
+      - key: NOTION_DATABASE_ID
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SYNC_BATCH_SIZE
+        value: "100"
+      - key: MAX_RETRIES
+        value: "3"
+      - key: RETRY_DELAY_MS
+        value: "1000" 

@@ -186,6 +186,43 @@ class SchemaManager {
   }
 
   /**
+   * Handle schema cache errors by attempting to refresh the cache
+   * @param {Object} supabaseService - Supabase service instance
+   * @param {string} tableName - Table name
+   * @param {Error} error - The original error
+   * @returns {Promise<boolean>} - Whether the error was handled successfully
+   */
+  static async handleSchemaCacheError(supabaseService, tableName, error) {
+    // Check if this is a schema cache error
+    if (error.code === 'PGRST204' && error.message.includes('schema cache')) {
+      logger.warn('Schema cache error detected, attempting recovery', { 
+        tableName, 
+        error: error.message 
+      });
+      
+      try {
+        // Attempt to refresh the schema cache
+        await supabaseService.refreshSchemaCache(tableName);
+        
+        // Wait a moment for the cache to refresh
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        logger.info('Schema cache error recovery completed', { tableName });
+        return true;
+      } catch (refreshError) {
+        logger.error('Failed to recover from schema cache error', { 
+          tableName, 
+          originalError: error.message,
+          refreshError: refreshError.message 
+        });
+        return false;
+      }
+    }
+    
+    return false;
+  }
+
+  /**
    * Validate column definitions
    * @param {Array} columnDefinitions - Column definitions to validate
    * @returns {boolean} - Whether all definitions are valid

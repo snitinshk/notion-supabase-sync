@@ -42,6 +42,44 @@ class SupabaseService {
   }
 
   /**
+   * Refresh PostgREST schema cache
+   * @param {string} tableName - Table name
+   * @returns {Promise<boolean>} - Whether refresh was successful
+   */
+  async refreshSchemaCache(tableName) {
+    try {
+      // Method 1: Try to trigger a schema refresh by making a request with a non-existent column
+      // This sometimes forces PostgREST to refresh its cache
+      try {
+        await this.client
+          .from(tableName)
+          .select('_schema_refresh_trigger')
+          .limit(1);
+      } catch (error) {
+        // Expected error, but it might trigger cache refresh
+        logger.debug('Schema refresh trigger attempted', { tableName });
+      }
+
+      // Method 2: Make a simple query to the table to refresh the connection
+      const { data, error } = await this.client
+        .from(tableName)
+        .select('id')
+        .limit(1);
+
+      if (error) {
+        logger.warn('Schema cache refresh query failed', { tableName, error: error.message });
+        return false;
+      }
+
+      logger.info('Schema cache refresh completed', { tableName });
+      return true;
+    } catch (error) {
+      logger.error('Error refreshing schema cache', { tableName, error: error.message });
+      return false;
+    }
+  }
+
+  /**
    * Create missing columns in a table based on Notion schema
    * @param {string} tableName - Table name
    * @param {Object} databaseSchema - Notion database schema
@@ -113,6 +151,12 @@ class SupabaseService {
           });
           errors.push({ statement, error: execError.message });
         }
+      }
+
+      // Refresh schema cache after creating columns
+      if (createdCount > 0) {
+        logger.info('Refreshing schema cache after column creation', { tableName });
+        await this.refreshSchemaCache(tableName);
       }
 
       const result = {
@@ -228,6 +272,37 @@ class SupabaseService {
       });
 
       if (error) {
+        // Check if this is a schema cache error and try to handle it
+        const handled = await SchemaManager.handleSchemaCacheError(this, tableName, error);
+        
+        if (handled) {
+          // Retry the upsert operation after schema cache refresh
+          logger.info('Retrying upsert after schema cache error recovery', { tableName });
+          const { data: retryResult, error: retryError } = await this.client
+            .from(tableName)
+            .upsert(timestampedData, {
+              onConflict,
+              ignoreDuplicates
+            });
+          
+          if (retryError) {
+            logger.error('Upsert failed even after schema cache error recovery', { 
+              tableName, 
+              error: retryError.message,
+              code: retryError.code 
+            });
+            throw retryError;
+          }
+          
+          logger.info('Upsert succeeded after schema cache error recovery', {
+            tableName,
+            dataCount: data.length,
+            resultCount: retryResult?.length || 0
+          });
+          
+          return { data: retryResult, error: null };
+        }
+        
         logger.error('Error upserting data', { error, tableName, dataCount: data.length });
         throw error;
       }

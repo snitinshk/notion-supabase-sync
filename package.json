@@ -4,19 +4,25 @@
   "description": "Production-ready Node.js script to sync data from Notion to Supabase",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "node --env-file=.env index.js",
-    "test": "jest",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "start": "node server.js",
+    "dev": "node --env-file=.env server.js",
+    "sync": "node index.js",
+    "debug": "node debug-schema-cache.js",
+    "test": "jest"
   },
-  "keywords": ["notion", "supabase", "sync", "database"],
+  "keywords": [
+    "notion",
+    "supabase",
+    "sync",
+    "database"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
     "@notionhq/client": "^2.2.14",
     "@supabase/supabase-js": "^2.39.3",
     "dotenv": "^16.4.1",
+    "express": "^5.1.0",
     "winston": "^3.11.0",
     "winston-daily-rotate-file": "^4.7.1"
   },
@@ -27,4 +33,4 @@
   "engines": {
     "node": ">=18.0.0"
   }
-} 
+}

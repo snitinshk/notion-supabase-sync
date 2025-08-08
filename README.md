@@ -14,6 +14,7 @@ A production-ready Node.js script that syncs data from Notion databases to Supab
 - ⚡ **Upsert Operations**: Handles both new and updated records
 - 🚀 **Production Ready**: Includes retry logic, rate limiting, and monitoring
 - 🔄 **Reusable**: Works with any Notion database
+- 📊 **Table Name**: `wheeltribe_content` (renamed from `notion_pages`)
 
 ## Supported Notion Property Types
 

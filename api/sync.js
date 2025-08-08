@@ -2,7 +2,16 @@ const NotionSupabaseSync = require('../index.js');
 
 module.exports = async (req, res) => {
   try {
-    console.log('Vercel API route triggered');
+    // Log the request source for debugging
+    const userAgent = req.headers['user-agent'] || '';
+    const isFromSupabase = userAgent.includes('Supabase') || req.headers['x-supabase-function'] === 'true';
+    
+    console.log('Vercel API route triggered', {
+      source: isFromSupabase ? 'Supabase Edge Function' : 'Direct',
+      userAgent: userAgent.substring(0, 100),
+      method: req.method,
+      url: req.url
+    });
     
     // Parse query parameters
     const { forceFullSync, maxPages, dryRun } = req.query;
@@ -13,7 +22,7 @@ module.exports = async (req, res) => {
     // Initialize
     await sync.initialize();
     
-    // Run sync with options
+    // Run sync with options - cron jobs will use incremental sync by default
     const options = {
       forceFullSync: forceFullSync === 'true',
       dryRun: dryRun === 'true',

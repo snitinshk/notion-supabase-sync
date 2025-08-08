@@ -18,7 +18,7 @@ class NotionSupabaseSync {
       notionDatabaseId: config.notionDatabaseId || process.env.NOTION_DATABASE_ID,
       supabaseUrl: config.supabaseUrl || process.env.SUPABASE_URL,
       supabaseServiceRoleKey: config.supabaseServiceRoleKey || process.env.SUPABASE_SERVICE_ROLE_KEY,
-      tableName: config.tableName || 'notion_pages',
+      tableName: config.tableName || 'wheeltribe_content',
       batchSize: parseInt(config.batchSize || process.env.SYNC_BATCH_SIZE || '100'),
       maxRetries: parseInt(config.maxRetries || process.env.MAX_RETRIES || '3'),
       retryDelay: parseInt(config.retryDelay || process.env.RETRY_DELAY_MS || '1000'),
@@ -57,7 +57,7 @@ class NotionSupabaseSync {
    * Initialize sync process
    */
   async initialize() {
-    logger.info('Initializing Notion to Supabase sync', {
+    logger.warn('Initializing Notion to Supabase sync', {
       databaseId: this.config.notionDatabaseId,
       tableName: this.config.tableName
     });
@@ -80,14 +80,38 @@ class NotionSupabaseSync {
       // Ensure base table exists
       await this.supabaseService.ensureTableExists(this.config.tableName);
 
+      // Refresh schema cache to ensure it's up to date
+      await this.supabaseService.refreshSchemaCache(this.config.tableName);
+
       // Initialize sync state table
       await this.syncStateManager.initializeSyncStateTable();
 
-      logger.info('Sync initialization completed successfully');
+      logger.warn('Sync initialization completed successfully');
       return true;
     } catch (error) {
       logger.error('Sync initialization failed', { error: error.message });
       throw error;
+    }
+  }
+
+  /**
+   * Manually refresh schema cache
+   */
+  async refreshSchema() {
+    try {
+      logger.info('Manually refreshing schema cache', { tableName: this.config.tableName });
+      const success = await this.supabaseService.refreshSchemaCache(this.config.tableName);
+      
+      if (success) {
+        logger.info('Schema cache refresh completed successfully');
+      } else {
+        logger.warn('Schema cache refresh failed');
+      }
+      
+      return success;
+    } catch (error) {
+      logger.error('Error refreshing schema cache', { error: error.message });
+      return false;
     }
   }
 
@@ -121,7 +145,7 @@ class NotionSupabaseSync {
           databaseSchema
         );
         
-        logger.info('Schema synchronization completed', {
+        logger.warn('Schema synchronization completed', {
           tableName: this.config.tableName,
           created: columnResult.created,
           existing: columnResult.existing,
@@ -136,9 +160,9 @@ class NotionSupabaseSync {
       if (!forceFullSync) {
         lastSyncTime = await this.syncStateManager.getLastSyncTime(this.config.notionDatabaseId);
         if (lastSyncTime) {
-          logger.info('Incremental sync detected', { lastSyncTime });
+          logger.warn('Incremental sync detected', { lastSyncTime });
         } else {
-          logger.info('Full sync required - no previous sync found');
+          logger.warn('Full sync required - no previous sync found');
         }
       }
 
@@ -417,8 +441,14 @@ async function main() {
         console.log('Cleanup completed:', cleanupResult);
         break;
 
+      case 'refresh-schema':
+        await sync.initialize();
+        const refreshResult = await sync.refreshSchema();
+        console.log('Schema refresh completed:', refreshResult);
+        break;
+
       default:
-        console.log('Usage: node index.js [sync|stats|cleanup] [options]');
+        console.log('Usage: node index.js [sync|stats|cleanup|refresh-schema] [options]');
         console.log('Options:');
         console.log('  --full        Force full sync');
         console.log('  --dry-run     Run without making changes');

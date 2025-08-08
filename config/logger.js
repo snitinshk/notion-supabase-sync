@@ -35,13 +35,13 @@ const logger = winston.createLogger({
   format: fileFormat,
   defaultMeta: { service: 'notion-supabase-sync' },
   transports: [
-    // Console transport
+    // Console transport - important info, warnings and errors
     new winston.transports.Console({
       format: consoleFormat,
       level: 'info'
     }),
     
-    // Daily rotate file transport for all logs
+    // Daily rotate file transport for important logs
     new DailyRotateFile({
       filename: path.join(logsDir, 'application-%DATE%.log'),
       datePattern: 'YYYY-MM-DD',

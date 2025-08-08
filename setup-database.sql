@@ -8,8 +8,8 @@
 -- 1. CREATE TABLES
 -- ============================================================================
 
--- Main table for Notion pages
-CREATE TABLE IF NOT EXISTS notion_pages (
+-- Main table for WheelTribe content
+CREATE TABLE IF NOT EXISTS wheeltribe_content (
     id BIGSERIAL PRIMARY KEY,
     notion_id TEXT UNIQUE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -31,11 +31,11 @@ CREATE TABLE IF NOT EXISTS sync_state (
 -- 2. CREATE INDEXES
 -- ============================================================================
 
--- Indexes for notion_pages table
-CREATE INDEX IF NOT EXISTS idx_notion_pages_notion_id ON notion_pages(notion_id);
-CREATE INDEX IF NOT EXISTS idx_notion_pages_created_at ON notion_pages(created_at);
-CREATE INDEX IF NOT EXISTS idx_notion_pages_updated_at ON notion_pages(updated_at);
-CREATE INDEX IF NOT EXISTS idx_notion_pages_last_edited_time ON notion_pages(last_edited_time);
+-- Indexes for wheeltribe_content table
+CREATE INDEX IF NOT EXISTS idx_wheeltribe_content_notion_id ON wheeltribe_content(notion_id);
+CREATE INDEX IF NOT EXISTS idx_wheeltribe_content_created_at ON wheeltribe_content(created_at);
+CREATE INDEX IF NOT EXISTS idx_wheeltribe_content_updated_at ON wheeltribe_content(updated_at);
+CREATE INDEX IF NOT EXISTS idx_wheeltribe_content_last_edited_time ON wheeltribe_content(last_edited_time);
 
 -- Indexes for sync_state table
 CREATE INDEX IF NOT EXISTS idx_sync_state_database_id ON sync_state(database_id);
@@ -69,10 +69,10 @@ $$ language 'plpgsql';
 -- 4. CREATE TRIGGERS
 -- ============================================================================
 
--- Trigger to automatically update updated_at on notion_pages
-DROP TRIGGER IF EXISTS update_notion_pages_updated_at ON notion_pages;
-CREATE TRIGGER update_notion_pages_updated_at
-    BEFORE UPDATE ON notion_pages
+-- Trigger to automatically update updated_at on wheeltribe_content
+DROP TRIGGER IF EXISTS update_wheeltribe_content_updated_at ON wheeltribe_content;
+CREATE TRIGGER update_wheeltribe_content_updated_at
+    BEFORE UPDATE ON wheeltribe_content
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
@@ -88,14 +88,14 @@ CREATE TRIGGER update_sync_state_updated_at
 -- ============================================================================
 
 -- Enable Row Level Security on both tables
-ALTER TABLE notion_pages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE wheeltribe_content ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sync_state ENABLE ROW LEVEL SECURITY;
 
--- Create policies for notion_pages table
-CREATE POLICY "Allow service role full access" ON notion_pages
+-- Create policies for wheeltribe_content table
+CREATE POLICY "Allow service role full access" ON wheeltribe_content
     FOR ALL USING (auth.role() = 'service_role');
 
-CREATE POLICY "Allow authenticated users full access" ON notion_pages
+CREATE POLICY "Allow authenticated users full access" ON wheeltribe_content
     FOR ALL USING (auth.role() = 'authenticated');
 
 -- Create policies for sync_state table
@@ -114,5 +114,6 @@ CREATE POLICY "Allow authenticated users full access" ON sync_state
 -- 3. Indexes improve query performance for large datasets
 -- 4. Triggers automatically update the updated_at timestamp
 -- 5. RLS policies can be added for security (commented out by default)
+-- 6. Table renamed from notion_pages to wheeltribe_content for better naming
 --
 -- ============================================================================ 

@@ -1,13 +1,34 @@
 const NotionSupabaseSync = require('../index.js');
 
-module.exports = async (req, res) => {
+// Unified handler that works both locally and on Vercel
+const syncHandler = async (req, res) => {
+  // Enable CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
+  // Only allow POST requests
+  if (req.method !== 'POST') {
+    return res.status(405).json({ 
+      success: false, 
+      message: 'Method not allowed. Use POST.' 
+    });
+  }
+
   try {
     // Log the request source for debugging
     const userAgent = req.headers['user-agent'] || '';
     const isFromSupabase = userAgent.includes('Supabase') || req.headers['x-supabase-function'] === 'true';
     
-    console.log('Vercel API route triggered', {
+    console.log('Sync API triggered', {
       source: isFromSupabase ? 'Supabase Edge Function' : 'Direct',
+      environment: process.env.VERCEL ? 'Vercel' : 'Local',
       userAgent: userAgent.substring(0, 100),
       method: req.method,
       url: req.url
@@ -50,4 +71,10 @@ module.exports = async (req, res) => {
       stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
-}; 
+};
+
+// Export for Vercel (serverless)
+module.exports = syncHandler;
+
+// Export for local Express server
+module.exports.handler = syncHandler; 

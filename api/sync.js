@@ -1,7 +1,6 @@
 const NotionSupabaseSync = require('../index.js');
 
-// Unified handler that works both locally and on Vercel
-const syncHandler = async (req, res) => {
+module.exports = async (req, res) => {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -71,10 +70,4 @@ const syncHandler = async (req, res) => {
       stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
-};
-
-// Export for Vercel (serverless)
-module.exports = syncHandler;
-
-// Export for local Express server
-module.exports.handler = syncHandler; 
+}; 

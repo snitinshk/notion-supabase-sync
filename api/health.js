@@ -1,5 +1,4 @@
-// Unified handler that works both locally and on Vercel
-const healthHandler = async (req, res) => {
+module.exports = async (req, res) => {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -42,10 +41,4 @@ const healthHandler = async (req, res) => {
       error: error.message
     });
   }
-};
-
-// Export for Vercel (serverless)
-module.exports = healthHandler;
-
-// Export for local Express server
-module.exports.handler = healthHandler; 
+}; 

@@ -15,6 +15,7 @@ app.get('/api/health', async (req, res) => {
     res.json({
       success: true,
       message: 'Notion-Supabase Sync API is running',
+      environment: 'Local',
       timestamp: new Date().toISOString(),
       endpoints: {
         sync: '/api/sync',
@@ -38,7 +39,7 @@ app.get('/api/health', async (req, res) => {
 // Sync endpoint
 app.post('/api/sync', async (req, res) => {
   try {
-    console.log('Sync request received:', req.query);
+    console.log('Local sync request received:', req.query);
     
     // Parse query parameters
     const { forceFullSync, maxPages, dryRun } = req.query;
@@ -86,8 +87,8 @@ app.get('/', (req, res) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`🚀 Local server running on http://localhost:${PORT}`);
   console.log(`📊 Dashboard: http://localhost:${PORT}`);
   console.log(`🔧 API: http://localhost:${PORT}/api/sync`);
   console.log(`💚 Health: http://localhost:${PORT}/api/health`);
-}); 
+});

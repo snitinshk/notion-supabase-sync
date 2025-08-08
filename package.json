@@ -4,8 +4,9 @@
   "description": "Production-ready Node.js script to sync data from Notion to Supabase",
   "main": "index.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --env-file=.env server.js",
+    "start": "node index.js",
+    "dev": "node --env-file=.env local-server.js",
+    "local": "node local-server.js",
     "sync": "node index.js",
     "debug": "node debug-schema-cache.js",
     "test": "jest"

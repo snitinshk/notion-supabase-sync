@@ -194,7 +194,7 @@ The sync creates these tables:
 The repository includes a complete GitHub Actions workflow for automated scheduling:
 
 #### Setup:
-1. **Automatic Schedule**: Runs daily at 4:30 PM IST (11:00 AM UTC)
+1. **Automatic Schedule**: Runs every 30 minutes
 
 2. **Manual Triggering**: Go to Actions tab → "Scheduled Notion to Supabase Sync" → "Run workflow"
    - ✅ Force full sync option

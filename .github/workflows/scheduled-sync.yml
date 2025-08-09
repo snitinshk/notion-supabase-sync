@@ -2,8 +2,8 @@ name: Scheduled Notion to Supabase Sync
 
 on:
   schedule:
-    # Run at 4:30 PM IST (11:00 AM UTC) every day
-    - cron: '0 11 * * *'
+    # Run every 30 minutes
+    - cron: '*/30 * * * *'
   
   # Allow manual triggering
   workflow_dispatch:

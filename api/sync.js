@@ -1,3 +1,4 @@
+// Import the main sync class
 const NotionSupabaseSync = require('../index.js');
 
 module.exports = async (req, res) => {
@@ -32,17 +33,43 @@ module.exports = async (req, res) => {
       method: req.method,
       url: req.url
     });
+
+    // Validate environment variables
+    const requiredEnvVars = [
+      'NOTION_TOKEN',
+      'NOTION_DATABASE_ID', 
+      'SUPABASE_URL',
+      'SUPABASE_SERVICE_ROLE_KEY'
+    ];
+
+    const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+    
+    if (missingVars.length > 0) {
+      console.error('Missing environment variables:', missingVars);
+      return res.status(500).json({
+        success: false,
+        error: `Missing environment variables: ${missingVars.join(', ')}`,
+        message: 'Please check your Vercel environment variables'
+      });
+    }
     
     // Parse query parameters
     const { forceFullSync, maxPages, dryRun } = req.query;
     
-    // Create sync instance
-    const sync = new NotionSupabaseSync();
+    // Create sync instance with explicit config
+    const sync = new NotionSupabaseSync({
+      notionToken: process.env.NOTION_TOKEN,
+      notionDatabaseId: process.env.NOTION_DATABASE_ID,
+      supabaseUrl: process.env.SUPABASE_URL,
+      supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+      tableName: process.env.TABLE_NAME || 'wheeltribe_content'
+    });
     
     // Initialize
+    console.log('Initializing sync...');
     await sync.initialize();
     
-    // Run sync with options - cron jobs will use incremental sync by default
+    // Run sync with options
     const options = {
       forceFullSync: forceFullSync === 'true',
       dryRun: dryRun === 'true',
@@ -52,6 +79,7 @@ module.exports = async (req, res) => {
     console.log('Sync options:', options);
     
     // Execute sync
+    console.log('Starting sync execution...');
     const result = await sync.sync(options);
     
     console.log('Sync completed:', result);
@@ -64,10 +92,17 @@ module.exports = async (req, res) => {
     
   } catch (error) {
     console.error('Sync error:', error);
+    console.error('Error stack:', error.stack);
+    
     res.status(500).json({
       success: false,
       error: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      details: {
+        name: error.name,
+        code: error.code,
+        message: error.message
+      }
     });
   }
 }; 

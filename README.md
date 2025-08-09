@@ -189,28 +189,41 @@ The sync creates these tables:
 
 ## 🔄 Scheduling
 
-### Vercel Cron Jobs
+### GitHub Actions (Recommended)
+
+The repository includes a complete GitHub Actions workflow for automated scheduling:
+
+#### Setup:
+1. **Automatic Schedule**: Runs daily at 4:30 PM IST (11:00 AM UTC)
+
+2. **Manual Triggering**: Go to Actions tab → "Scheduled Notion to Supabase Sync" → "Run workflow"
+   - ✅ Force full sync option
+   - ✅ Dry run mode option  
+   - ✅ Limit max pages option
+
+4. **Monitoring**: Full logs and status tracking in GitHub Actions
+
+#### Workflow file: `.github/workflows/scheduled-sync.yml`
+```yaml
+name: Scheduled Notion to Supabase Sync
+on:
+  schedule:
+    - cron: '30 13 * * *'  # 7 PM IST daily
+  workflow_dispatch:      # Manual triggering
+```
+
+### Alternative: Vercel Cron Jobs
 ```json
 {
   "crons": [
     {
-      "path": "/api/sync",
+      "path": "/api/sync", 
       "schedule": "30 13 * * *"
     }
   ]
 }
 ```
-
-### GitHub Actions
-```yaml
-name: Scheduled Sync
-on:
-  schedule:
-    - cron: '0 */6 * * *'
-```
-
-### Supabase Edge Functions
-Create a trigger function that calls your Vercel deployment.
+*Note: Vercel cron requires paid plan for reliable scheduling*
 
 ## 🛠️ Development
 

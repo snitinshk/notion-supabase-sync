@@ -1,0 +1,88 @@
+name: Scheduled Notion to Supabase Sync
+
+on:
+  schedule:
+    # Run at 4:30 PM IST (11:00 AM UTC) every day
+    - cron: '0 11 * * *'
+  
+  # Allow manual triggering
+  workflow_dispatch:
+    inputs:
+      forceFullSync:
+        description: 'Force full sync (ignore last sync time)'
+        required: false
+        default: 'false'
+        type: boolean
+      dryRun:
+        description: 'Dry run (preview changes without applying)'
+        required: false
+        default: 'false'
+        type: boolean
+      maxPages:
+        description: 'Maximum pages to sync (optional)'
+        required: false
+        type: string
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Trigger Vercel Sync
+      run: |
+        # Build query parameters
+        PARAMS=""
+        if [ "${{ github.event.inputs.forceFullSync }}" = "true" ]; then
+          PARAMS="${PARAMS}forceFullSync=true&"
+        fi
+        if [ "${{ github.event.inputs.dryRun }}" = "true" ]; then
+          PARAMS="${PARAMS}dryRun=true&"
+        fi
+        if [ -n "${{ github.event.inputs.maxPages }}" ]; then
+          PARAMS="${PARAMS}maxPages=${{ github.event.inputs.maxPages }}&"
+        fi
+        
+        # Remove trailing &
+        PARAMS=$(echo "$PARAMS" | sed 's/&$//')
+        
+        # Construct URL
+        VERCEL_SYNC_URL="https://notion-supabase-sync-nu.vercel.app/api/sync"
+        if [ -n "$PARAMS" ]; then
+          URL="${VERCEL_SYNC_URL}?${PARAMS}"
+        else
+          URL="${VERCEL_SYNC_URL}"
+        fi
+        
+        echo "Triggering sync at: $URL"
+        
+        # Make the API call
+        RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$URL" \
+          -H "Content-Type: application/json" \
+          -H "User-Agent: GitHub-Actions-Scheduler")
+        
+        # Extract response body and status code
+        HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+        BODY=$(echo "$RESPONSE" | head -n -1)
+        
+        echo "HTTP Status: $HTTP_CODE"
+        echo "Response: $BODY"
+        
+        # Check if successful
+        if [ "$HTTP_CODE" -eq 200 ]; then
+          echo "✅ Sync completed successfully!"
+        else
+          echo "❌ Sync failed with status $HTTP_CODE"
+          exit 1
+        fi
+
+    - name: Log sync result
+      if: always()
+      run: |
+        echo "Sync job completed at $(date)"
+        echo "Triggered by: ${{ github.event_name }}"
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          echo "Manual trigger parameters:"
+          echo "  forceFullSync: ${{ github.event.inputs.forceFullSync }}"
+          echo "  dryRun: ${{ github.event.inputs.dryRun }}"
+          echo "  maxPages: ${{ github.event.inputs.maxPages }}"
+        fi

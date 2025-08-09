@@ -1,6 +1,14 @@
 #!/usr/bin/env node
 
-require('dotenv').config();
+// Only load dotenv in non-production environments or when .env file exists
+if (process.env.NODE_ENV !== 'production' || !process.env.NOTION_TOKEN) {
+  try {
+    require('dotenv').config();
+  } catch (error) {
+    console.warn('dotenv not available, using environment variables');
+  }
+}
+
 const logger = require('./config/logger');
 const NotionService = require('./services/notionService');
 const SupabaseService = require('./services/supabaseService');
